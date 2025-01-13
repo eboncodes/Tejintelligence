@@ -1,0 +1,455 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>TEJAI 1.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        body {
+            font-family: 'Unbounded', sans-serif;
+            background-color: #1f1e1e;
+        }
+        .transition-brightness { 
+            transition: filter 0.3s ease;
+        }
+        .flicker {
+            animation: flicker 0.5s infinite;
+        }
+        @keyframes flicker {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.05);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-dots div {
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background-color: #888;
+            border-radius: 50%;
+            animation: loading 0.4s infinite;
+        }
+        .loading-dots div:nth-child(1) {
+            animation-delay: 0s;
+        }
+        .loading-dots div:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+        .loading-dots div:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+        @keyframes loading {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .floating-icon {
+            position: fixed;
+            bottom: 20px;
+            background-color: #7b7b7b;
+            color: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .floating-icon:hover {
+            background-color: #555;
+        }
+        .review-icon {
+            right: 20px;
+        }
+        .regenerate-icon {
+            right: 70px;
+        }
+        .mic-icon {
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        .mic-icon:hover {
+            opacity: 0.7;
+        }
+        .center-logo {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .hidden-logo {
+            opacity: 0;
+            transform: translate(-50%, -60%);
+        }
+        .example-prompts {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            gap: 10px;
+            margin-top: 50px;
+        }
+        .example-prompt {
+            border: 2px solid #888;
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+            text-align: left;
+            width: 150px;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            position: relative;
+        }
+        .example-prompt:hover {
+            background-color: #555;
+            border-color: #555;
+        }
+        .example-prompt i {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+        }
+        .example-prompt .text-container {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .message-box {
+            position: relative;
+            display: inline-block;
+        }
+        .message-box::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: linear-gradient(45deg, rgba(0, 255, 0, 0.5), rgba(0, 255, 0, 0));
+            border-radius: 10px;
+            z-index: -1;
+            filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col justify-between" onload="randomizePrompts()">
+    <!-- Header -->
+    <header class="p-4 flex justify-between items-center">
+        <div class="flex items-center">
+            <img alt="Alien logo 1" class="w-48 h-48 object-contain" src="https://i.imgur.com/wWWEdkK.png"/>
+        </div>
+    </header>
+    <!-- Center Logo -->
+    <div id="center-logo" class="center-logo">
+        <img alt="New chatbox logo" class="w-48 h-48 object-contain" src="https://i.imgur.com/WvzP1S4.png"/>
+    </div>
+    <!-- Example Prompts -->
+    <div class="example-prompts">
+        <div class="example-prompt" id="idea-prompt" onclick="sendExamplePrompt(this.innerText)">
+            <i class="fas fa-lightbulb text-yellow-500"></i>
+            <div class="text-container"></div>
+        </div>
+        <div class="example-prompt" id="education-prompt" onclick="sendExamplePrompt(this.innerText)">
+            <i class="fas fa-graduation-cap text-blue-500"></i>
+            <div class="text-container"></div>
+        </div>
+        <div class="example-prompt" id="fact-prompt" onclick="sendExamplePrompt(this.innerText)">
+            <i class="fas fa-info-circle text-orange-500"></i>
+            <div class="text-container"></div>
+        </div>
+    </div>
+    <!-- Chat Messages -->
+    <main id="chat-container" class="flex-1 p-4 space-y-4 overflow-y-auto">
+        <!-- Placeholder for chat messages -->
+    </main>
+    <!-- Input Area -->
+    <footer class="p-4 bg-[#2e2d2d] flex items-center rounded-full mx-auto mb-4 w-4/5 max-w-lg shadow-lg">
+        <img id="chatbox-logo" alt="New chatbox logo" class="w-10 h-10 rounded-full opacity-100 transition-brightness" src="https://i.imgur.com/WvzP1S4.png"/>
+        <div class="h-8 w-px bg-gray-400 mx-2 rounded-full"></div>
+        <input id="chat-input" class="flex-1 mx-2 p-2 bg-[#2e2d2d] outline-none text-lg text-white rounded-lg" placeholder="Ask me anything you want" type="text" oninput="toggleIcons(this.value)" onkeypress="handleKeyPress(event)"/>
+        <div class="relative w-12 h-12">
+            <div id="send-icon-container" class="absolute inset-0 flex items-center justify-center transition-opacity opacity-0">
+                <i id="send-icon" class="fas fa-arrow-up text-3xl text-white opacity-100" onclick="sendMessage()"></i>
+            </div>
+        </div>
+        <i id="mic-icon" class="fas fa-microphone text-3xl text-white opacity-100 mic-icon ml-4" onclick="startListening()"></i>
+    </footer>
+    <div class="floating-icon review-icon" onclick="redirectToGoogle()">
+        <i class="fas fa-star text-lg"></i>
+    </div>
+    <div class="floating-icon regenerate-icon" onclick="regenerateChat()">
+        <i class="fas fa-redo text-lg"></i>
+    </div>
+    <script>
+        const ideaPrompts = [
+            "Tell me a joke",
+            "Give me a creative writing prompt",
+            "Suggest a new business idea",
+            "What are some innovative tech ideas?",
+            "Share a unique art project idea",
+            "Give me a startup idea",
+            "Suggest a DIY home project",
+            "What are some unique app ideas?",
+            "Give me a new recipe idea",
+            "Suggest a fun weekend activity"
+        ];
+
+        const educationPrompts = [
+            "Explain the theory of relativity",
+            "What is quantum mechanics?",
+            "Describe the process of photosynthesis",
+            "What is the Pythagorean theorem?",
+            "Explain the water cycle",
+            "What are Newton's laws of motion?",
+            "Describe the structure of an atom",
+            "What is the theory of evolution?",
+            "Explain the concept of supply and demand",
+            "What is the significance of the Renaissance?"
+        ];
+
+        const factPrompts = [
+            "Give me a fun fact",
+            "Tell me a historical fact",
+            "Share a science fact",
+            "What is a fact about space?",
+            "Give me a fact about animals",
+            "Tell me a fact about the human body",
+            "Share a fact about technology",
+            "What is a fact about the ocean?",
+            "Give me a fact about plants",
+            "Tell me a fact about ancient civilizations"
+        ];
+
+        function randomizePrompts() {
+            document.getElementById('idea-prompt').querySelector('.text-container').innerText = ideaPrompts[Math.floor(Math.random() * ideaPrompts.length)];
+            document.getElementById('education-prompt').querySelector('.text-container').innerText = educationPrompts[Math.floor(Math.random() * educationPrompts.length)];
+            document.getElementById('fact-prompt').querySelector('.text-container').innerText = factPrompts[Math.floor(Math.random() * factPrompts.length)];
+        }
+
+        let typingTimeout;
+        function toggleIcons(value) {
+            const sendIconContainer = document.getElementById('send-icon-container');
+            const micIcon = document.getElementById('mic-icon');
+            const chatboxLogo = document.getElementById('chatbox-logo');
+            if (value.trim() !== '') {
+                sendIconContainer.classList.remove('opacity-0');
+                micIcon.classList.add('opacity-0');
+                chatboxLogo.classList.add('flicker');
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    chatboxLogo.classList.remove('flicker');
+                }, 500);
+            } else {
+                sendIconContainer.classList.add('opacity-0');
+                micIcon.classList.remove('opacity-0');
+                chatboxLogo.classList.remove('flicker');
+            }
+        }
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        function capitalizeFirstLetter(text) {
+            return text.charAt(0).toUpperCase() + text.slice(1);
+        }
+        async function sendMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const chatContainer = document.getElementById('chat-container');
+            const chatboxLogo = document.getElementById('chatbox-logo');
+            const centerLogo = document.getElementById('center-logo');
+            const examplePrompts = document.querySelector('.example-prompts');
+            let message = chatInput.value.trim();
+            if (message !== '') {
+                message = capitalizeFirstLetter(message);
+
+                // Hide center logo and example prompts
+                centerLogo.classList.add('hidden-logo');
+                examplePrompts.style.display = 'none';
+
+                // Add user message 
+                const userMessage = document.createElement('div');
+                userMessage.className = 'flex justify-end items-start fade-in';
+                userMessage.innerHTML = `
+                    <div class="flex flex-col items-end">
+                        <img alt="User avatar" class="w-8 h-8 rounded-full mb-1 opacity-100" src="https://i.imgur.com/dODHhAu.png" style="filter: invert(1);"/>
+                        <div class="bg-blue-600 text-white rounded-lg p-4 max-w-lg shadow-md message-box">${message}</div>
+                    </div>`;
+                chatContainer.appendChild(userMessage);
+                chatInput.value = '';
+                toggleIcons('');
+
+                // Show thinking indicator
+                const thinkingIndicator = document.createElement('div');
+                thinkingIndicator.className = 'flex justify-start items-start fade-in';
+                thinkingIndicator.id = 'thinkingIndicator';
+                thinkingIndicator.innerHTML = `
+                    <div class="flex flex-col items-start">
+                        <div class="flex items-center mb-1">
+                            <img alt="AI avatar" class="w-8 h-8 rounded-full opacity-100 flicker" src="https://i.imgur.com/WvzP1S4.png"/>
+                        </div>
+                        <div class="bg-gray-300 rounded-lg p-4 max-w-lg shadow-md">
+                            <div class="loading-dots">
+                                <div></div>
+                                <div></div>
+                                <div></div>
+                            </div>
+                        </div>
+                    </div>`;
+                chatContainer.appendChild(thinkingIndicator);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Make the logo flicker while generating response
+                chatboxLogo.classList.add('flicker');
+
+                // Call Hugging Face API
+                const aiMessage = await generateText([{ role: "user", content: message }]);
+
+                // Hide thinking indicator
+                thinkingIndicator.remove();
+
+                // Stop the logo flickering
+                chatboxLogo.classList.remove('flicker');
+
+                // Add bot reply
+                const botMessage = document.createElement('div');
+                botMessage.className = 'flex justify-start items-start fade-in';
+                botMessage.innerHTML = `
+                    <div class="flex flex-col items-start">
+                        <div class="flex items-center mb-1">
+                            <img alt="AI avatar" class="w-8 h-8 rounded-full opacity-100" src="https://i.imgur.com/WvzP1S4.png"/>
+                        </div>
+                        <div class="bg-[#2e2d2d] text-white rounded-lg p-4 max-w-lg shadow-md message-box">${aiMessage}</div>
+                    </div>`;
+                chatContainer.appendChild(botMessage);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Speak the AI response
+                speak(aiMessage);
+            }
+        }
+        async function generateText(messages) {
+            const { HfInference } = await import('https://esm.sh/@huggingface/inference');
+            const hf = new HfInference('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');
+
+            try {
+                const response = await hf.chatCompletion({
+                    model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+                    messages: messages,
+                    max_tokens: 500,
+                    temperature: 0.5,
+                });
+                return response.choices[0].message.content;
+            } catch (error) {
+                console.error("Error fetching from Hugging Face:", error);
+                return "Sorry, I couldn't generate a response at the moment.";
+            }
+        }
+        function speak(text) {
+            // Cancel any ongoing speech
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance();
+            utterance.lang = 'en-GB'; // Set to British English
+            utterance.rate = 1; // Set the rate to normal speed
+            utterance.pitch = 1; // Set the pitch to normal
+            utterance.volume = 1; // Set the volume to maximum
+
+            // Split the text into chunks
+            const chunks = text.match(/[^.!?]+[.!?]+/g) || [text];
+
+            // Function to speak each chunk sequentially
+            function speakChunks(index) {
+                if (index < chunks.length) {
+                    utterance.text = chunks[index];
+                    utterance.onend = () => speakChunks(index + 1);
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+
+            speakChunks(0);
+        }
+        function redirectToGoogle() {
+            window.open('https://sites.google.com/view/tejreview123/home', '_blank');
+        }
+        function regenerateChat() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = '';
+            const centerLogo = document.getElementById('center-logo');
+            const examplePrompts = document.querySelector('.example-prompts');
+            centerLogo.classList.remove('hidden-logo');
+            examplePrompts.style.display = 'flex';
+            randomizePrompts();
+        }
+        function startListening() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.start();
+
+            recognition.onresult = function(event) {
+                let transcript = event.results[0][0].transcript;
+                transcript = capitalizeFirstLetter(transcript); // Capitalize the first letter
+                document.getElementById('chat-input').value = transcript;
+                toggleIcons(transcript);
+                sendMessage(); // Automatically send the message
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error detected: ' + event.error);
+            };
+        }
+        function sendExamplePrompt(prompt) {
+            const chatInput = document.getElementById('chat-input');
+            chatInput.value = prompt;
+            sendMessage();
+        }
+    </script>
+</body>
+</html>
